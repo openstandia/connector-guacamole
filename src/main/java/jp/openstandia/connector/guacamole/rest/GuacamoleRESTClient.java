@@ -10,6 +10,7 @@ import org.identityconnectors.framework.common.exceptions.*;
 import org.identityconnectors.framework.common.objects.*;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -480,6 +481,9 @@ public class GuacamoleRESTClient implements GuacamoleClient {
             throw new UnknownUidException(connectionUid, CONNECTION_OBJECT_CLASS);
         }
 
+        Map<String, String> parameters = getConnectionParameters(schema, connectionUid);
+        target.parameters = parameters;
+
         // Apply delta
         modifications.stream().forEach(delta -> target.applyDelta(schema, delta));
 
@@ -509,6 +513,29 @@ public class GuacamoleRESTClient implements GuacamoleClient {
             }
         } catch (IOException e) {
             throw new ConnectorIOException("Failed to call guacamole get connections API", e);
+        }
+    }
+
+    private Map<String, String> getConnectionParameters(GuacamoleSchema schema, Uid uid) {
+        try {
+            Response response = get(getParametersEndpointURL(configuration, uid.getUidValue()));
+
+            if (response.code() == 404) {
+                // Don't throw
+                return Collections.emptyMap();
+            }
+
+            if (response.code() != 200) {
+                throw new ConnectorIOException(String.format("Failed to get guacamole connection parameters: %s, statusCode: %d",
+                        uid.getUidValue(), response.code()));
+            }
+
+            // Success
+            Map<String, String> conn = MAPPER.readValue(response.body().byteStream(), Map.class);
+            return conn;
+
+        } catch (IOException e) {
+            throw new ConnectorIOException("Failed to call guacamole get connection parameters API", e);
         }
     }
 
