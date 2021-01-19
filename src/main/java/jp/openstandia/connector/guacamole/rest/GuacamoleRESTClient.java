@@ -147,7 +147,7 @@ public class GuacamoleRESTClient implements GuacamoleClient {
             }
         });
 
-        callUpdate(USER_OBJECT_CLASS, getUserGroupEndpointURL(configuration, userUid), userUid, target);
+        callUpdate(USER_OBJECT_CLASS, getUserEndpointURL(configuration, userUid), userUid, target);
     }
 
     @Override
@@ -905,10 +905,7 @@ public class GuacamoleRESTClient implements GuacamoleClient {
                     .get()
                     .build();
 
-            final OkHttpClient client = new OkHttpClient.Builder()
-                    .build();
-
-            final Response response = client.newCall(request).execute();
+            final Response response = httpClient.newCall(request).execute();
 
             if (response.code() == 403) {
                 GuacamoleErrorRepresentation error = MAPPER.readValue(response.body().byteStream(), GuacamoleErrorRepresentation.class);
@@ -936,10 +933,7 @@ public class GuacamoleRESTClient implements GuacamoleClient {
                     .post(requestBody)
                     .build();
 
-            final OkHttpClient client = new OkHttpClient.Builder()
-                    .build();
-
-            final Response response = client.newCall(request).execute();
+            final Response response = httpClient.newCall(request).execute();
 
             if (response.code() == 403) {
                 GuacamoleErrorRepresentation error = MAPPER.readValue(response.body().byteStream(), GuacamoleErrorRepresentation.class);
@@ -967,10 +961,7 @@ public class GuacamoleRESTClient implements GuacamoleClient {
                     .put(requestBody)
                     .build();
 
-            final OkHttpClient client = new OkHttpClient.Builder()
-                    .build();
-
-            final Response response = client.newCall(request).execute();
+            final Response response = httpClient.newCall(request).execute();
 
             if (response.code() == 403) {
                 GuacamoleErrorRepresentation error = MAPPER.readValue(response.body().byteStream(), GuacamoleErrorRepresentation.class);
@@ -998,10 +989,7 @@ public class GuacamoleRESTClient implements GuacamoleClient {
                     .patch(requestBody)
                     .build();
 
-            final OkHttpClient client = new OkHttpClient.Builder()
-                    .build();
-
-            final Response response = client.newCall(request).execute();
+            final Response response = httpClient.newCall(request).execute();
 
             if (response.code() == 403) {
                 GuacamoleErrorRepresentation error = MAPPER.readValue(response.body().byteStream(), GuacamoleErrorRepresentation.class);
@@ -1027,10 +1015,7 @@ public class GuacamoleRESTClient implements GuacamoleClient {
                     .delete()
                     .build();
 
-            final OkHttpClient client = new OkHttpClient.Builder()
-                    .build();
-
-            final Response response = client.newCall(request).execute();
+            final Response response = httpClient.newCall(request).execute();
 
             if (response.code() == 403) {
                 GuacamoleErrorRepresentation error = MAPPER.readValue(response.body().byteStream(), GuacamoleErrorRepresentation.class);
