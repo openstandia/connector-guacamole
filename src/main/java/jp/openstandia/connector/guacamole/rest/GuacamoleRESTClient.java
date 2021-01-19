@@ -147,7 +147,7 @@ public class GuacamoleRESTClient implements GuacamoleClient {
             }
         });
 
-        callUpdate(USER_OBJECT_CLASS, getUserGroupEndpointURL(configuration, userUid), userUid, target);
+        callUpdate(USER_OBJECT_CLASS, getUserEndpointURL(configuration, userUid), userUid, target);
     }
 
     @Override
