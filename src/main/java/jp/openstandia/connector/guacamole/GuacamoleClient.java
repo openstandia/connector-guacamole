@@ -28,6 +28,13 @@ public interface GuacamoleClient {
 
     String getAuthToken();
 
+    List<GuacamoleSchemaRepresentation> schema();
+
+
+    default String getSchemaEndpointURL(GuacamoleConfiguration configuration) {
+        String url = configuration.getGuacamoleURL();
+        return String.format("%ssession/data/%s/schema/userAttributes", url, configuration.getGuacamoleDataSource());
+    }
 
     default String getUserEndpointURL(GuacamoleConfiguration configuration) {
         String url = configuration.getGuacamoleURL();
@@ -337,6 +344,18 @@ public interface GuacamoleClient {
         public List<GuacamoleAttribute> toGuacamoleAttributes() {
             return attributes.entrySet().stream().map(a -> new GuacamoleAttribute(a.getKey(), a.getValue())).collect(Collectors.toList());
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class GuacamoleSchemaRepresentation {
+        public String name;
+        public List<GuacamoleSchemaFieldRepresentation> fields;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    class GuacamoleSchemaFieldRepresentation {
+        public String name;
+        public String type;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -15,6 +15,7 @@
  */
 package jp.openstandia.connector.guacamole;
 
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
 import org.identityconnectors.framework.common.objects.*;
 
@@ -26,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -65,6 +67,9 @@ public class GuacamoleUtils {
         if (attributeInfo.getType() == Boolean.class) {
             return AttributeBuilder.build(a.name, Boolean.parseBoolean(a.value));
         }
+        if (attributeInfo.getType() == GuardedString.class) {
+            return AttributeBuilder.build(a.name, new GuardedString(a.value.toCharArray()));
+        }
 
         // String
         return AttributeBuilder.build(a.name, a.value);
@@ -91,23 +96,43 @@ public class GuacamoleUtils {
             throw new InvalidAttributeValueException("Invalid attribute. name: " + delta.getName());
         }
 
+        String rtn = null;
+
         if (attributeInfo.getType() == Integer.class) {
-            return AttributeDeltaUtil.getAsStringValue(delta);
-        }
-        if (attributeInfo.getType() == ZonedDateTime.class) {
+            rtn = AttributeDeltaUtil.getAsStringValue(delta);
+
+        } else if (attributeInfo.getType() == ZonedDateTime.class) {
             // The format must be YYYY-MM-DD in guacamole
             ZonedDateTime date = (ZonedDateTime) AttributeDeltaUtil.getSingleValue(delta);
-            return date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        }
-        if (attributeInfo.getType() == Boolean.class) {
+            rtn = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        } else if (attributeInfo.getType() == Boolean.class) {
             // Use "" for false value in Guacamole API
             if (Boolean.FALSE.equals(AttributeDeltaUtil.getBooleanValue(delta))) {
                 return "";
             }
-            return AttributeDeltaUtil.getAsStringValue(delta);
+            rtn = AttributeDeltaUtil.getAsStringValue(delta);
+
+        } else if (attributeInfo.getType() == GuardedString.class) {
+            GuardedString gs = AttributeDeltaUtil.getGuardedStringValue(delta);
+            if (gs == null) {
+                return "";
+            }
+            AtomicReference<String> value = new AtomicReference<>();
+            gs.access(v -> {
+                value.set(String.valueOf(v));
+            });
+            rtn = value.get();
+
+        } else {
+            rtn = AttributeDeltaUtil.getAsStringValue(delta);
         }
 
-        return AttributeDeltaUtil.getAsStringValue(delta);
+        if (rtn == null) {
+            // To remove, return empty string
+            return "";
+        }
+        return rtn;
     }
 
     private static String toGuacamoleValue(Map<String, AttributeInfo> schema, Attribute attr) {
@@ -116,23 +141,43 @@ public class GuacamoleUtils {
             throw new InvalidAttributeValueException("Invalid attribute. name: " + attr.getName());
         }
 
+        String rtn = null;
+
         if (attributeInfo.getType() == Integer.class) {
-            return AttributeUtil.getAsStringValue(attr);
-        }
-        if (attributeInfo.getType() == ZonedDateTime.class) {
+            rtn = AttributeUtil.getAsStringValue(attr);
+
+        } else if (attributeInfo.getType() == ZonedDateTime.class) {
             // The format must be YYYY-MM-DD in guacamole
             ZonedDateTime date = (ZonedDateTime) AttributeUtil.getSingleValue(attr);
-            return date.format(DateTimeFormatter.ISO_LOCAL_DATE);
-        }
-        if (attributeInfo.getType() == Boolean.class) {
+            rtn = date.format(DateTimeFormatter.ISO_LOCAL_DATE);
+
+        } else if (attributeInfo.getType() == Boolean.class) {
             // Use "" for false value in Guacamole API
             if (Boolean.FALSE.equals(AttributeUtil.getBooleanValue(attr))) {
                 return "";
             }
-            return AttributeUtil.getAsStringValue(attr);
+            rtn = AttributeUtil.getAsStringValue(attr);
+
+        } else if (attributeInfo.getType() == GuardedString.class) {
+            GuardedString gs = AttributeUtil.getGuardedStringValue(attr);
+            if (gs == null) {
+                return "";
+            }
+            AtomicReference<String> value = new AtomicReference<>();
+            gs.access(v -> {
+                value.set(String.valueOf(v));
+            });
+            rtn = value.get();
+
+        } else {
+            rtn = AttributeUtil.getAsStringValue(attr);
         }
 
-        return AttributeUtil.getAsStringValue(attr);
+        if (rtn == null) {
+            // To remove, return empty string
+            return "";
+        }
+        return rtn;
     }
 
     /**

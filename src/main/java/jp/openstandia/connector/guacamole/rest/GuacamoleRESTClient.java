@@ -99,6 +99,29 @@ public class GuacamoleRESTClient implements GuacamoleClient {
     }
 
     @Override
+    public List<GuacamoleSchemaRepresentation> schema() {
+        try (Response response = get(getSchemaEndpointURL(configuration))) {
+            if (response.code() == 404) {
+                // Don't throw
+                return null;
+            }
+
+            if (response.code() != 200) {
+                throw new ConnectorIOException(String.format("Failed to get guacamole schema. statusCode: %d", response.code()));
+            }
+
+            // Success
+            List<GuacamoleSchemaRepresentation> schema = MAPPER.readValue(response.body().byteStream(),
+                    new TypeReference<List<GuacamoleSchemaRepresentation>>() {
+                    });
+            return schema;
+
+        } catch (IOException e) {
+            throw new ConnectorIOException("Failed to call guacamole get schema API", e);
+        }
+    }
+
+    @Override
     public void close() {
     }
 

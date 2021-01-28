@@ -34,9 +34,7 @@ import org.identityconnectors.framework.spi.operations.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -53,7 +51,7 @@ public class GuacamoleConnector implements PoolableConnector, CreateOp, UpdateDe
     protected GuacamoleConfiguration configuration;
     protected GuacamoleClient client;
 
-    private Map<String, AttributeInfo> userSchemaMap;
+    private GuacamoleSchema cachedSchema;
     private String instanceName;
 
     @Override
@@ -121,42 +119,21 @@ public class GuacamoleConnector implements PoolableConnector, CreateOp, UpdateDe
     @Override
     public Schema schema() {
         try {
-            SchemaBuilder schemaBuilder = new SchemaBuilder(GuacamoleConnector.class);
-
-            ObjectClassInfo userSchemaInfo = GuacamoleUserHandler.createSchema();
-            schemaBuilder.defineObjectClass(userSchemaInfo);
-
-            ObjectClassInfo userGroupSchemaInfo = GuacamoleUserGroupHandler.createSchema();
-            schemaBuilder.defineObjectClass(userGroupSchemaInfo);
-
-            ObjectClassInfo connectionSchemaInfo = GuacamoleConnectionHandler.createSchema();
-            schemaBuilder.defineObjectClass(connectionSchemaInfo);
-
-            ObjectClassInfo connectionGroupSchemaInfo = GuacamoleConnectionGroupHandler.createSchema();
-            schemaBuilder.defineObjectClass(connectionGroupSchemaInfo);
-
-            schemaBuilder.defineOperationOption(OperationOptionInfoBuilder.buildAttributesToGet(), SearchOp.class);
-            schemaBuilder.defineOperationOption(OperationOptionInfoBuilder.buildReturnDefaultAttributes(), SearchOp.class);
-
-            userSchemaMap = new HashMap<>();
-            userSchemaInfo.getAttributeInfo().stream()
-                    .forEach(a -> userSchemaMap.put(a.getName(), a));
-            userSchemaMap.put(Uid.NAME, AttributeInfoBuilder.define("username").build());
-            userSchemaMap = Collections.unmodifiableMap(userSchemaMap);
-
-            return schemaBuilder.build();
+            List<GuacamoleClient.GuacamoleSchemaRepresentation> guacamoleSchema = this.client.schema();
+            cachedSchema = new GuacamoleSchema(configuration, client, guacamoleSchema);
+            return cachedSchema.schema;
 
         } catch (RuntimeException e) {
             throw processRuntimeException(e);
         }
     }
 
-    private Map<String, AttributeInfo> getUserSchemaMap() {
+    private GuacamoleSchema geSchema() {
         // Load schema map if it's not loaded yet
-        if (userSchemaMap == null) {
+        if (cachedSchema == null) {
             schema();
         }
-        return userSchemaMap;
+        return cachedSchema;
     }
 
     protected GuacamoleObjectHandler createGuacamoleObjectHandler(ObjectClass objectClass) {
@@ -165,16 +142,16 @@ public class GuacamoleConnector implements PoolableConnector, CreateOp, UpdateDe
         }
 
         if (objectClass.equals(USER_OBJECT_CLASS)) {
-            return new GuacamoleUserHandler(configuration, client, getUserSchemaMap());
+            return new GuacamoleUserHandler(configuration, client, geSchema());
 
         } else if (objectClass.equals(USER_GROUP_OBJECT_CLASS)) {
-            return new GuacamoleUserGroupHandler(configuration, client);
+            return new GuacamoleUserGroupHandler(configuration, client, geSchema());
 
         } else if (objectClass.equals(CONNECTION_OBJECT_CLASS)) {
-            return new GuacamoleConnectionHandler(configuration, client);
+            return new GuacamoleConnectionHandler(configuration, client, geSchema());
 
         } else if (objectClass.equals(CONNECTION_GROUP_OBJECT_CLASS)) {
-            return new GuacamoleConnectionGroupHandler(configuration, client);
+            return new GuacamoleConnectionGroupHandler(configuration, client, geSchema());
 
         } else {
             throw new InvalidAttributeValueException("Unsupported object class " + objectClass);
