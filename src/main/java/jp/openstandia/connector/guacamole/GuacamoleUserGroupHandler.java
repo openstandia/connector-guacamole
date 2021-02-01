@@ -60,10 +60,10 @@ public class GuacamoleUserGroupHandler implements GuacamoleObjectHandler {
     private final GuacamoleSchema schema;
     private final GuacamoleAssociationHandler associationHandler;
 
-    public GuacamoleUserGroupHandler(GuacamoleConfiguration configuration, GuacamoleClient client) {
+    public GuacamoleUserGroupHandler(GuacamoleConfiguration configuration, GuacamoleClient client, GuacamoleSchema schema) {
         this.configuration = configuration;
         this.client = client;
-        this.schema = new GuacamoleSchema(configuration, client);
+        this.schema = schema;
         this.associationHandler = new GuacamoleAssociationHandler(configuration, client);
     }
 

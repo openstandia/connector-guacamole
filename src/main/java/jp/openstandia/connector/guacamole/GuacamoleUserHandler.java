@@ -16,11 +16,15 @@
 package jp.openstandia.connector.guacamole;
 
 import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,16 +42,7 @@ public class GuacamoleUserHandler implements GuacamoleObjectHandler {
     static final String ATTR_USERNAME = "username";
 
     // Attributes
-    static final String ATTR_EMAIL = "guac-email-address";
-    static final String ATTR_ORGANIZATIONAL_ROLE = "guac-organizational-role";
-    static final String ATTR_ORGANIZATION = "guac-organization";
-    static final String ATTR_FULL_NAME = "guac-full-name";
-    static final String ATTR_PASSWORD_EXPIRED = "expired";
-    static final String ATTR_TIMEZONE = "timezone";
-    static final String ATTR_ACCESS_WINDOW_START = "access-window-start";
-    static final String ATTR_ACCESS_WINDOW_END = "access-window-end";
-    static final String ATTR_VALID_UNTIL = "valid-until";
-    static final String ATTR_VALID_FROM = "valid-from";
+    // Don't define here since guacamole provides user's schema endpoint
 
     // Permissions
     private static final String ATTR_USER_PERMISSIONS = "userPermissions";
@@ -67,14 +62,14 @@ public class GuacamoleUserHandler implements GuacamoleObjectHandler {
     private final GuacamoleSchema schema;
 
     public GuacamoleUserHandler(GuacamoleConfiguration configuration, GuacamoleClient client,
-                                Map<String, AttributeInfo> schema) {
+                                GuacamoleSchema schema) {
         this.configuration = configuration;
         this.client = client;
-        this.schema = new GuacamoleSchema(configuration, client);
+        this.schema = schema;
         this.associationHandler = new GuacamoleAssociationHandler(configuration, client);
     }
 
-    public static ObjectClassInfo createSchema() {
+    public static ObjectClassInfo createSchema(List<GuacamoleClient.GuacamoleSchemaRepresentation> schema) {
         ObjectClassInfoBuilder builder = new ObjectClassInfoBuilder();
         builder.setType(USER_OBJECT_CLASS.getObjectClassValue());
 
@@ -102,86 +97,63 @@ public class GuacamoleUserHandler implements GuacamoleObjectHandler {
         builder.addAttributeInfo(OperationalAttributeInfos.PASSWORD);
 
         // Other attributes
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_FULL_NAME)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_EMAIL)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_ORGANIZATION)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_ORGANIZATIONAL_ROLE)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_PASSWORD_EXPIRED)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .setType(Boolean.class)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_TIMEZONE)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_ACCESS_WINDOW_START)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_ACCESS_WINDOW_END)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .build()
-        );
-//        builder.addAttributeInfo(
-//                AttributeInfoBuilder.define(ATTR_DISABLED)
-//                        .setRequired(false) // Must be optional
-//                        .setCreateable(true)
-//                        .setUpdateable(true)
-//                        .build()
-//        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_VALID_UNTIL)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .setType(ZonedDateTime.class)
-                        .build()
-        );
-        builder.addAttributeInfo(
-                AttributeInfoBuilder.define(ATTR_VALID_FROM)
-                        .setRequired(false) // Must be optional
-                        .setCreateable(true)
-                        .setUpdateable(true)
-                        .setType(ZonedDateTime.class)
-                        .build()
-        );
+        // Generate from fetched guacamole schema
+        schema.forEach(s -> {
+            s.fields.stream()
+                    .filter(f -> !(s.name.equals("restrictions") && f.name.equals(ATTR_DISABLED)))
+                    .forEach(f -> {
+                        switch (f.type) {
+                            case "NUMERIC":
+                                builder.addAttributeInfo(
+                                        AttributeInfoBuilder.define(f.name)
+                                                .setRequired(false) // Must be optional
+                                                .setCreateable(true)
+                                                .setUpdateable(true)
+                                                .setType(Integer.class) // Guacamole NumericFiled is defined with Integer
+                                                .build());
+                                break;
+                            case "BOOLEAN":
+                                builder.addAttributeInfo(
+                                        AttributeInfoBuilder.define(f.name)
+                                                .setRequired(false) // Must be optional
+                                                .setCreateable(true)
+                                                .setUpdateable(true)
+                                                .setType(Boolean.class)
+                                                .build());
+                                break;
+                            case "DATE":
+                                builder.addAttributeInfo(
+                                        AttributeInfoBuilder.define(f.name)
+                                                .setRequired(false) // Must be optional
+                                                .setCreateable(true)
+                                                .setUpdateable(true)
+                                                .setType(ZonedDateTime.class)
+                                                .build());
+                                break;
+                            case "PASSWORD":
+                                builder.addAttributeInfo(
+                                        AttributeInfoBuilder.define(f.name)
+                                                .setRequired(false) // Must be optional
+                                                .setCreateable(true)
+                                                .setUpdateable(true)
+                                                .setType(GuardedString.class)
+                                                .build());
+                                break;
+                            case "TEXT":
+                            case "EMAIL":
+                            case "TIMEZONE":
+                            case "TIME":
+                            default: // Define Other types as string
+                                builder.addAttributeInfo(
+                                        AttributeInfoBuilder.define(f.name)
+                                                .setRequired(false) // Must be optional
+                                                .setCreateable(true)
+                                                .setUpdateable(true)
+                                                .build());
+                                break;
+                        }
+                    });
+        });
 
         // Permissions
         builder.addAttributeInfo(

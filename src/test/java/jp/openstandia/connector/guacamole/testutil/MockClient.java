@@ -22,6 +22,7 @@ import org.identityconnectors.framework.common.exceptions.AlreadyExistsException
 import org.identityconnectors.framework.common.exceptions.UnknownUidException;
 import org.identityconnectors.framework.common.objects.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,11 @@ public class MockClient implements GuacamoleClient {
     @Override
     public String getAuthToken() {
         return null;
+    }
+
+    @Override
+    public List<GuacamoleSchemaRepresentation> schema() {
+        return new ArrayList<>();
     }
 
     @Override

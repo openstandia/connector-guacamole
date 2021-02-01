@@ -49,10 +49,10 @@ public class GuacamoleConnectionGroupHandler implements GuacamoleObjectHandler {
     private final GuacamoleSchema schema;
     private final GuacamoleAssociationHandler associationHandler;
 
-    public GuacamoleConnectionGroupHandler(GuacamoleConfiguration configuration, GuacamoleClient client) {
+    public GuacamoleConnectionGroupHandler(GuacamoleConfiguration configuration, GuacamoleClient client, GuacamoleSchema schema) {
         this.configuration = configuration;
         this.client = client;
-        this.schema = new GuacamoleSchema(configuration, client);
+        this.schema = schema;
         this.associationHandler = new GuacamoleAssociationHandler(configuration, client);
     }
 

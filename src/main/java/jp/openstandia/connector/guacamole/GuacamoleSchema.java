@@ -5,6 +5,7 @@ import org.identityconnectors.framework.spi.operations.SearchOp;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,13 +24,14 @@ public class GuacamoleSchema {
     public final Map<String, AttributeInfo> connectionSchema;
     public final Map<String, AttributeInfo> connectionGroupSchema;
 
-    public GuacamoleSchema(GuacamoleConfiguration configuration, GuacamoleClient client) {
+    public GuacamoleSchema(GuacamoleConfiguration configuration, GuacamoleClient client,
+                           List<GuacamoleClient.GuacamoleSchemaRepresentation> guacamoleSchema) {
         this.configuration = configuration;
         this.client = client;
 
         SchemaBuilder schemaBuilder = new SchemaBuilder(GuacamoleConnector.class);
 
-        ObjectClassInfo userSchemaInfo = GuacamoleUserHandler.createSchema();
+        ObjectClassInfo userSchemaInfo = GuacamoleUserHandler.createSchema(guacamoleSchema);
         schemaBuilder.defineObjectClass(userSchemaInfo);
 
         ObjectClassInfo groupSchemaInfo = GuacamoleUserGroupHandler.createSchema();
@@ -44,7 +46,7 @@ public class GuacamoleSchema {
         schemaBuilder.defineOperationOption(OperationOptionInfoBuilder.buildAttributesToGet(), SearchOp.class);
         schemaBuilder.defineOperationOption(OperationOptionInfoBuilder.buildReturnDefaultAttributes(), SearchOp.class);
 
-        schema = schemaBuilder.build();
+        this.schema = schemaBuilder.build();
 
         Map<String, AttributeInfo> userSchemaMap = new HashMap<>();
         for (AttributeInfo info : userSchemaInfo.getAttributeInfo()) {
