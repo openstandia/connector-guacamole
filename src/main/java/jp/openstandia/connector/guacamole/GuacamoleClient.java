@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static jp.openstandia.connector.guacamole.GuacamoleConnectionHandler.ATTR_PARAMETERS;
+import static jp.openstandia.connector.guacamole.GuacamoleConnectionHandler.ATTR_PROTOCOL;
 import static jp.openstandia.connector.guacamole.GuacamoleUserGroupHandler.USER_GROUP_OBJECT_CLASS;
 import static jp.openstandia.connector.guacamole.GuacamoleUserHandler.ATTR_DISABLED;
 import static jp.openstandia.connector.guacamole.GuacamoleUserHandler.USER_OBJECT_CLASS;
@@ -443,6 +444,9 @@ public interface GuacamoleClient {
             if (attr.is(Name.NAME)) {
                 applyParentIdentifierAndName(AttributeUtil.getStringValue(attr));
 
+            } else if (attr.is(ATTR_PROTOCOL)) {
+                applyProtocol(AttributeUtil.getStringValue(attr));
+
             } else if (attr.is(ATTR_PARAMETERS)) {
                 applyParameters(attr.getValue(), false);
 
@@ -459,6 +463,9 @@ public interface GuacamoleClient {
         public void applyDelta(GuacamoleSchema schema, AttributeDelta delta) {
             if (delta.is(Name.NAME)) {
                 applyParentIdentifierAndName(AttributeDeltaUtil.getStringValue(delta));
+
+            } else if (delta.is(ATTR_PROTOCOL)) {
+                applyProtocol(AttributeDeltaUtil.getStringValue(delta));
 
             } else if (delta.is(ATTR_PARAMETERS)) {
                 applyParameters(delta.getValuesToAdd(), false);
@@ -490,8 +497,8 @@ public interface GuacamoleClient {
             this.name = name;
         }
 
-        private void applyName(String name) {
-            this.name = name;
+        private void applyProtocol(String protocol) {
+            this.protocol = protocol;
         }
 
         private void applyAttribute(GuacamoleAttribute attr) {
