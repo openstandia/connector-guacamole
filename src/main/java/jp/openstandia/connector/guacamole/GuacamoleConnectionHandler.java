@@ -40,7 +40,7 @@ public class GuacamoleConnectionHandler implements GuacamoleObjectHandler {
     // This is composed by 'parentIdentifier' and 'name' to make it unique
     // The format is <parentIdentifier>/<name>
     private static final String ATTR_NAME_WITH_PARENT_IDENTIFIER = "name-with-parentIdentifier";
-    private static final String ATTR_PROTOCOL = "protocol";
+    static final String ATTR_PROTOCOL = "protocol";
 
     // Attributes
     private static final String ATTR_FAILOVER_ONLY = "failover-only";
