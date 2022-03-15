@@ -32,8 +32,7 @@ import org.identityconnectors.framework.spi.PoolableConnector;
 import org.identityconnectors.framework.spi.operations.*;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
+import java.net.*;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -78,6 +77,11 @@ public class GuacamoleConnector implements PoolableConnector, CreateOp, UpdateDe
         okHttpBuilder.readTimeout(15, TimeUnit.SECONDS);
         okHttpBuilder.writeTimeout(15, TimeUnit.SECONDS);
         okHttpBuilder.addInterceptor(getInterceptor());
+
+        // Setup cookie manager for multiple guacamole nodes with sticky session cookie
+        CookieManager cookieManager = new CookieManager();
+        cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
+        okHttpBuilder.cookieJar(new JavaNetCookieJar(cookieManager));
 
         // Setup http proxy aware httpClient
         if (StringUtil.isNotEmpty(configuration.getHttpProxyHost())) {
