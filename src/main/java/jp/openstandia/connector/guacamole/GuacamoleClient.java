@@ -468,8 +468,9 @@ public interface GuacamoleClient {
                 applyProtocol(AttributeDeltaUtil.getStringValue(delta));
 
             } else if (delta.is(ATTR_PARAMETERS)) {
-                applyParameters(delta.getValuesToAdd(), false);
+                // We need to apply "ValuesToRemove" first because of replace situation
                 applyParameters(delta.getValuesToRemove(), true);
+                applyParameters(delta.getValuesToAdd(), false);
 
             } else {
                 if (!schema.isConnectionSchema(delta)) {
