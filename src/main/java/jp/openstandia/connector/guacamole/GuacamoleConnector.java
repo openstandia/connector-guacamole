@@ -73,9 +73,9 @@ public class GuacamoleConnector implements PoolableConnector, CreateOp, UpdateDe
 
     protected void authenticateResource() {
         OkHttpClient.Builder okHttpBuilder = new OkHttpClient.Builder();
-        okHttpBuilder.connectTimeout(20, TimeUnit.SECONDS);
-        okHttpBuilder.readTimeout(15, TimeUnit.SECONDS);
-        okHttpBuilder.writeTimeout(15, TimeUnit.SECONDS);
+        okHttpBuilder.connectTimeout(configuration.getConnectionTimeoutInMilliseconds(), TimeUnit.MILLISECONDS);
+        okHttpBuilder.readTimeout(configuration.getReadTimeoutInMilliseconds(), TimeUnit.MILLISECONDS);
+        okHttpBuilder.writeTimeout(configuration.getWriteTimeoutInMilliseconds(), TimeUnit.MILLISECONDS);
         okHttpBuilder.addInterceptor(getInterceptor());
 
         // Setup cookie manager for multiple guacamole nodes with sticky session cookie

@@ -31,6 +31,9 @@ public class GuacamoleConfiguration extends AbstractConfiguration {
     private String httpProxyUser;
     private GuardedString httpProxyPassword;
     private boolean suppressInvitationMessageEnabled = true;
+    private int connectionTimeoutInMilliseconds = 20000;
+    private int readTimeoutInMilliseconds = 15000;
+    private int writeTimeoutInMilliseconds = 15000;
 
     @ConfigurationProperty(
             order = 1,
@@ -147,6 +150,48 @@ public class GuacamoleConfiguration extends AbstractConfiguration {
         this.httpProxyPassword = httpProxyPassword;
     }
 
+    @ConfigurationProperty(
+            order = 9,
+            displayMessageKey = "Connection Timeout (in milliseconds)",
+            helpMessageKey = "Connection timeout when connecting to Guacamole API. (Default: 20000)",
+            required = false,
+            confidential = false)
+    public int getConnectionTimeoutInMilliseconds() {
+        return connectionTimeoutInMilliseconds;
+    }
+
+    public void setConnectionTimeoutInMilliseconds(int connectionTimeoutInMilliseconds) {
+        this.connectionTimeoutInMilliseconds = connectionTimeoutInMilliseconds;
+    }
+
+    @ConfigurationProperty(
+            order = 10,
+            displayMessageKey = "Connection Read Timeout (in milliseconds)",
+            helpMessageKey = "Connection read timeout when connecting to Guacamole API. (Default: 15000)",
+            required = false,
+            confidential = false)
+    public int getReadTimeoutInMilliseconds() {
+        return readTimeoutInMilliseconds;
+    }
+
+    public void setReadTimeoutInMilliseconds(int readTimeoutInMilliseconds) {
+        this.readTimeoutInMilliseconds = readTimeoutInMilliseconds;
+    }
+
+    @ConfigurationProperty(
+            order = 11,
+            displayMessageKey = "Connection Write Timeout (in milliseconds)",
+            helpMessageKey = "Connection write timeout when connecting to Guacamole API. (Default: 15000)",
+            required = false,
+            confidential = false)
+    public int getWriteTimeoutInMilliseconds() {
+        return writeTimeoutInMilliseconds;
+    }
+
+    public void setWriteTimeoutInMilliseconds(int writeTimeoutInMilliseconds) {
+        this.writeTimeoutInMilliseconds = writeTimeoutInMilliseconds;
+    }
+    
     @Override
     public void validate() {
         if (guacamoleURL == null) {
